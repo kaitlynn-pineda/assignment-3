@@ -143,7 +143,8 @@ def train_model(model, train_input, train_target, val_input, val_target, input_m
      # compile the model: define optimizer, loss, and metrics
     model.compile(optimizer=tf.keras.optimizers.Adam(lr=learning_rate),
                  loss='mse',
-                 metrics=['mae'])
+                 #metrics=['mae'])
+                 metrics=['mae', 'accuracy'])
 
     # tensorboard callback
     logs_dir = 'logs/log_{}'.format(datetime.datetime.now().strftime("%m-%d-%Y-%H-%M"))
@@ -202,8 +203,8 @@ def test_model(model, test_input, test_target, input_mean, input_stdev, batch_si
 def compute_average_L2_error(test_target, predicted_targets):
     """
     Compute the average L2 error for the predictions
-    :param test_target: matrix with ground truth targets [N x 1]
-    :param predicted_targets: matrix with predicted targets [N x 1]
+    :param test_target: matrix with ground truth targets [N x 1] = [R x C]
+    :param predicted_targets: matrix with predicted targets [N x 1] = [R x C]
     :return: average L2 error
     """
     # TO-DO. Complete. Replace the line below with code that actually computes the average L2 error over the targets.
@@ -211,18 +212,40 @@ def compute_average_L2_error(test_target, predicted_targets):
     #.sqrt(x)
     #.pow(x,2) = x raised to 2 power
 
-    diff = 0 #holds the difference variable
-    l2_err = 0; #will hold the l2_err; is going to be square rooted at the end
+    ##OLD CODE
+    # diff = 0 #holds the difference variable
+    # l2_err = 0; #will hold the l2_err; is going to be square rooted at the end
 
-    for j in range(test_target.shape[1]): #column
-        for i in range(test_target.shape[0]): #row
-            #[i][j] = [ROW][COLUMN]
-            diff = test_target[i][j] - predicted_targets[i][j]
-            l2_err = l2_err + math.pow(diff,2)
+    # for j in range(test_target.shape[1]): #column
+    #     for i in range(test_target.shape[0]): #row
+    #         #[i][j] = [ROW][COLUMN]
+    #         diff = test_target[i][j] - predicted_targets[i][j]
+    #         l2_err = l2_err + math.pow(diff,2)
  
-    average_l2_err = math.sqrt(l2_err)
+    # average_l2_err = math.sqrt(l2_err)
+
+    # return average_l2_err
+
+    ##NEW CODE
+
+    #diff = holds the difference variable
+    all_l2_err = 0; #will hold the l2_err; is going to be square rooted at the end
+
+    #going to iterate ---> 
+    #left to right    ---> 
+    #for ea. row,     etc.
+    for i in range(test_target.shape[0]): #row = 240
+        for j in range(test_target.shape[1]): #column = 1
+            #[i][j] = [ROW][COLUMN]
+            diff = test_target[i][j] - predicted_targets[i][j] #finds what x is
+            l2_err = math.sqrt(math.pow(diff,2)) #getting the abs value of x by first doing x^2 and then x^(1/2)
+            all_l2_err = all_l2_err + l2_err #adding x to a sum that is going to be averaged at the end
+ 
+    #getting the ave by dividing the total error count by the # of rows
+    average_l2_err = all_l2_err/test_target.shape[0]
 
     return average_l2_err
+
 
 
 def main(num_examples, epochs, lr, visualize_training_data, build_fn=build_linear_model, batch_size=16):
@@ -244,11 +267,12 @@ def main(num_examples, epochs, lr, visualize_training_data, build_fn=build_linea
     all_train_input, all_train_target, test_input, test_target = sfu.split_data(input, target, 0.6)
 
     # visualize all training/testing (uncomment if you want to visualize the whole dataset)
-    # plot_train_and_test(all_train_input, all_train_target, test_input, test_target, "train", "test", title="Train/Test Data")
+    #sfu.plot_train_and_test(all_train_input, all_train_target, test_input, test_target, "train", "test", title="Train/Test Data")
 
     # split training data into actual training and validation
     train_input, train_target, val_input, val_target = sfu.split_data(all_train_input, all_train_target, 0.8)
 
+#THIS IS THE THING I NEED TO LEAVE BACK IN TO SEE THE GRAPH
     # visualize training/validation (uncomment if you want to visualize the training/validation data)
     if visualize_training_data:
         sfu.plot_train_and_test(train_input, train_target, val_input, val_target, "train", "validation", title="Train/Val Data")
